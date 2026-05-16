@@ -56,13 +56,77 @@ class CertificateManager:
         except Exception:
             return True
         deadline = datetime.now(timezone.utc) + timedelta(days=self.config.tls.renew_days_before)
-        return cert.not_valid_after_utc <= deadline
+        if cert.not_valid_after_utc <= deadline:
+            return True
+        return not self._certificate_matches_configuration(cert)
 
     def _read_cloudflare_token(self) -> str:
         token = self.paths.cloudflare_token_file.read_text(encoding="utf-8").strip()
         if not token:
             raise RuntimeError(f"Cloudflare token file is empty: {self.paths.cloudflare_token_file}")
         return token
+
+    @staticmethod
+    def _read_optional_secret_file(path: Path) -> str:
+        if not path.exists():
+            return ""
+        return path.read_text(encoding="utf-8").strip()
+
+    def _load_eab_credentials(self) -> tuple[str, str]:
+        kid = self.config.tls.acme_eab_kid or self._read_optional_secret_file(self.paths.acme_eab_kid_file)
+        hmac_key = self.config.tls.acme_eab_hmac_key or self._read_optional_secret_file(self.paths.acme_eab_hmac_key_file)
+        if bool(kid) != bool(hmac_key):
+            raise RuntimeError("ACME EAB credentials are incomplete; both KID and HMAC key are required")
+        if self.config.tls.acme_server == "actalis" and not kid:
+            raise RuntimeError(
+                "Actalis ACME requires EAB credentials. "
+                f"Checked inline config plus {self.paths.acme_eab_kid_file} and {self.paths.acme_eab_hmac_key_file}."
+            )
+        return kid, hmac_key
+
+    @staticmethod
+    def _redact_command(command: list[str]) -> str:
+        redacted: list[str] = []
+        redact_next = False
+        for part in command:
+            if redact_next:
+                redacted.append("<redacted>")
+                redact_next = False
+                continue
+            redacted.append(part)
+            if part in {"--eab-kid", "--eab-hmac-key"}:
+                redact_next = True
+        return " ".join(redacted)
+
+    @staticmethod
+    def _redact_text(text: str, sensitive_values: Iterable[str]) -> str:
+        redacted = text
+        for value in sorted({item for item in sensitive_values if item}, key=len, reverse=True):
+            redacted = redacted.replace(value, "<redacted>")
+        return redacted
+
+    @staticmethod
+    def _sensitive_values(command: list[str], env: dict[str, str]) -> list[str]:
+        sensitive_values: list[str] = []
+        for index, part in enumerate(command[:-1]):
+            if part in {"--eab-kid", "--eab-hmac-key"}:
+                sensitive_values.append(command[index + 1])
+        cloudflare_token = env.get("CF_Token", "").strip()
+        if cloudflare_token:
+            sensitive_values.append(cloudflare_token)
+        return sensitive_values
+
+    def _certificate_matches_configuration(self, cert: x509.Certificate) -> bool:
+        try:
+            san_names = cert.extensions.get_extension_for_class(x509.SubjectAlternativeName).value.get_values_for_type(
+                x509.DNSName
+            )
+        except x509.ExtensionNotFound:
+            return False
+        actual_domains = {name.strip().lower() for name in san_names if name.strip()}
+        _primary_domain, issue_domains = self._certificate_domains()
+        expected_domains = {domain.strip().lower() for domain in issue_domains if domain.strip()}
+        return actual_domains == expected_domains
 
     def _run_acme(self, args: Iterable[str]) -> None:
         self.paths.acme_dir.mkdir(parents=True, exist_ok=True)
@@ -78,7 +142,9 @@ class CertificateManager:
             "--server",
             self.config.tls.acme_server,
         ]
-        LOG.info("Running ACME command: %s", " ".join(command))
+        display_command = self._redact_command(command)
+        sensitive_values = self._sensitive_values(command, env)
+        LOG.info("Running ACME command: %s", display_command)
         result = subprocess.run(
             command,
             env=env,
@@ -88,32 +154,37 @@ class CertificateManager:
             check=False,
         )
         if result.stdout.strip():
-            LOG.info("ACME output:\n%s", result.stdout.strip())
+            LOG.info("ACME output:\n%s", self._redact_text(result.stdout.strip(), sensitive_values))
         if result.returncode != 0:
-            raise RuntimeError(f"ACME command failed ({result.returncode}): {' '.join(command)}")
+            raise RuntimeError(f"ACME command failed ({result.returncode}): {display_command}")
 
     def _provision_or_renew(self) -> None:
         self.paths.certs_dir.mkdir(parents=True, exist_ok=True)
-        base_domain = self.config.tls.base_domain
-        self._run_acme(["--register-account", "-m", self.config.tls.email])
+        primary_domain, issue_domains = self._certificate_domains()
+        register_args = ["--register-account", "-m", self.config.tls.email]
+        eab_kid, eab_hmac_key = self._load_eab_credentials()
+        if eab_kid and eab_hmac_key:
+            register_args.extend(
+                [
+                    "--eab-kid",
+                    eab_kid,
+                    "--eab-hmac-key",
+                    eab_hmac_key,
+                ]
+            )
+        self._run_acme(register_args)
+        issue_args = ["--issue", "--dns", "dns_cf"]
+        for domain in issue_domains:
+            issue_args.extend(["-d", domain])
+        issue_args.extend(["--keylength", "2048"])
         self._run_acme(
-            [
-                "--issue",
-                "--dns",
-                "dns_cf",
-                "-d",
-                base_domain,
-                "-d",
-                f"*.{base_domain}",
-                "--keylength",
-                "2048",
-            ]
+            issue_args
         )
         self._run_acme(
             [
                 "--install-cert",
                 "-d",
-                base_domain,
+                primary_domain,
                 "--fullchain-file",
                 str(self.paths.cert_file),
                 "--key-file",
@@ -123,3 +194,9 @@ class CertificateManager:
         if not self.paths.cert_file.exists() or not self.paths.key_file.exists():
             raise RuntimeError("ACME completed without writing certificate files")
 
+    def _certificate_domains(self) -> tuple[str, list[str]]:
+        if self.config.tls.acme_server == "actalis":
+            stack_fqdn = self.config.network.stack_fqdn
+            return stack_fqdn, [stack_fqdn]
+        base_domain = self.config.tls.base_domain
+        return base_domain, [base_domain, f"*.{base_domain}"]
