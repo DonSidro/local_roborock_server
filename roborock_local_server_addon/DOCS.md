@@ -16,7 +16,7 @@ It publishes two TLS ports directly:
    - `cloudflare_acme`: set `tls_base_domain`, `tls_email`, `cloudflare_token`
 4. Start the add-on.
 
-Before choosing the TLS mode, check the tested-vacuum certificate guidance in `docs/tested_vacuums.md`. Different models may need `zerossl`, `actalis`, or your own certificate chain.
+Before choosing the TLS mode, check the tested-vacuum certificate guidance in `docs/tested_vacuums.md`. Different models may need `zerossl`, `actalis`, or your own certificate chain. For most users, prefer `zerossl`. Use `actalis` mainly for older vacuums or when your model is already known to need it.
 
 The add-on always runs the embedded MQTT broker and keeps the topic bridge enabled.
 

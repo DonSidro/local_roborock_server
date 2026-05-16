@@ -43,7 +43,7 @@ Start here if this is your first time setting up the stack:
 3. [Cloudflare setup](docs/cloudflare_setup.md) if you want Cloudflare DNS-01 auto-renew for certificates.
 4. [Onboarding](docs/onboarding.md) to pair a vacuum from a second machine after the server is running.
 
-Before choosing a certificate path, check [Tested vacuums](docs/tested_vacuums.md). Different models do not all accept the same certificate chains.
+Before choosing a certificate path, check [Tested vacuums](docs/tested_vacuums.md). Different models do not all accept the same certificate chains. For most users, start with ZeroSSL. Use Actalis mainly for older vacuums or models that are already known to trust that chain more reliably.
 
 Additional docs:
 

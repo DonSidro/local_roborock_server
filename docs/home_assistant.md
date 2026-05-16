@@ -19,6 +19,8 @@ Different vacuums do not all trust the same certificate chains. Use that page to
 - `tls_mode = cloudflare_acme` with `acme_server = actalis`
 - `tls_mode = provided` with your own `cert_file` and `key_file`
 
+For most users, prefer `acme_server = zerossl`. Use `actalis` mainly for older vacuums or when the tested-vacuum guidance for your model specifically points to it.
+
 ### Install Steps
 
 1. Open the Home Assistant Add-on Store.
@@ -39,7 +41,7 @@ Different vacuums do not all trust the same certificate chains. Use that page to
    - TLS settings:
      - `tls_mode = provided` with explicit `cert_file` and `key_file`
      - or `tls_mode = cloudflare_acme` with `tls_base_domain`, `tls_email`, and `cloudflare_token`
-     - optional ACME CA selection with `acme_server`
+     - optional ACME CA selection with `acme_server` (`zerossl` is the preferred default for most users)
      - if `acme_server = actalis`, also set `acme_eab_kid` and `acme_eab_hmac_key`.
 
 5. Start the add-on.
