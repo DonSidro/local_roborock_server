@@ -2,6 +2,8 @@
 
 Use this if you do not want Cloudflare DNS-01 automation and instead want to provide the TLS certificate files yourself during [Installation](installation.md).
 
+Check [Tested Vacuums](tested_vacuums.md) first. This is the right path when your vacuum works better with a certificate chain other than the built-in `zerossl` or `actalis` options, or when you already have certs you want to reuse. Older vacuums are less likely to support certs from places like LetsEncrypt. Newer vacuums may work, but this is not tested. Please report back any findings you have via a PR to the tested_vacuums page.
+
 ## Required Config
 
 Set the TLS section in `config.toml` to the provided-certificate mode:

@@ -20,6 +20,22 @@ The following vacuums are confirmed working:
 - QRevo Master
 - QRevo Plus
 
+Certificate reports:
+
+| Vacuum | ZeroSSL / Cloudflare | Actalis | Let's Encrypt | SSL.com |
+|---|---:|---:|---:|---:|
+| Roborock S5 Max | ❌ | ✅ | ❌ | ❓ |
+| Roborock S7 | ❓ | ✅ | ❌ | ✅ |
+| Roborock S7 MaxV | ✅ | ❓ | ❓ | ❓ |
+| Roborock S8 | ❓ | ❓ | ❓ | ❓ |
+| Roborock S8 Pro Ultra (a70) | ❓ | ❓ | ❓ | ❓ |
+| Roborock Saros 10R | ❓ | ❓ | ❓ | ❓ |
+| Roborock G30U | ✅ | ❓ | ❓ | ❓ |
+| Roborock Qrevo S5V | ❓ | ❓ | ❓ | ❓ |
+| QRevo MaxV | ❓ | ❓ | ❓ | ❓ |
+| QRevo Master | ❓ | ❓ | ❓ | ❓ |
+| QRevo Plus | ✅ | ❓ | ❓ | ❓ |
+
 ## Unsupported Vacuums
 
 The following vacuums are not supported and may never be supported.

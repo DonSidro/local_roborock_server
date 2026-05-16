@@ -15,6 +15,18 @@ After the stack is running, continue with [Onboarding](onboarding.md) to pair a 
 - A network that can host the stack's HTTPS and MQTT TLS ports internally. The defaults are `555` and `8881`.
 - A Cloudflare API token with DNS edit access for the zone if you want Cloudflare DNS-01 auto-renew. See [Cloudflare setup](cloudflare_setup.md).
 
+## Choose Your Certificate Path First
+
+Before you run the setup wizard, check [Tested Vacuums](tested_vacuums.md).
+
+Different vacuums trust different certificate chains. That determines whether you should:
+
+- use `zerossl` with Cloudflare DNS-01 automation
+- switch Cloudflare DNS-01 automation to `actalis`
+- skip Cloudflare ACME and bring your own certificate files instead
+
+If your model already has certificate notes on the tested-vacuums page, follow that guidance first. It is easier to choose the right certificate path up front than to reissue certs after onboarding starts.
+
 ## Network Setup
 
 1. Pick a hostname for this application. It must be a subdomain of a domain you own, and it **must** start with `api-`.
@@ -71,7 +83,7 @@ After the stack is running, continue with [Onboarding](onboarding.md) to pair a 
 
 4. If you chose external MQTT, fill in `broker.host` in `config.toml` before starting the stack. See [Custom MQTT](custom_mqtt.md).
 
-5. If you skipped Cloudflare, put your certificate files in `data/certs/fullchain.pem` and `data/certs/privkey.pem`. See [Custom certificate management](custom_cert_management.md).
+5. If you skipped Cloudflare, put your certificate files in `data/certs/fullchain.pem` and `data/certs/privkey.pem`. This is the path to use when your vacuum works better with a certificate chain you manage yourself. See [Custom certificate management](custom_cert_management.md).
 
 6. Start the container:
 

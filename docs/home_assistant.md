@@ -11,6 +11,14 @@ This is an installation method, not a post-install integration step. The add-on 
 
 - `ghcr.io/python-roborock/local_roborock_server`
 
+Before configuring the add-on, check [Tested Vacuums](tested_vacuums.md).
+
+Different vacuums do not all trust the same certificate chains. Use that page to decide whether this install should use:
+
+- `tls_mode = cloudflare_acme` with `acme_server = zerossl`
+- `tls_mode = cloudflare_acme` with `acme_server = actalis`
+- `tls_mode = provided` with your own `cert_file` and `key_file`
+
 ### Install Steps
 
 1. Open the Home Assistant Add-on Store.
