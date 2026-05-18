@@ -1266,7 +1266,7 @@ wheels = [
 
 [[package]]
 name = "roborock-local-server"
-version = "0.0.2rc8"
+version = "0.0.5"
 source = { editable = "." }
 dependencies = [
     { name = "aiohttp" },
