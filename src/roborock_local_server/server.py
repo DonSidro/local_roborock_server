@@ -546,20 +546,19 @@ class ReleaseSupervisor:
     def _protocol_login_identity(self) -> dict[str, Any]:
         snapshot = load_cloud_full_snapshot(self.context)
         if isinstance(snapshot, dict):
-            meta_value = snapshot.get("meta")
-            meta = meta_value if isinstance(meta_value, dict) else {}
             user_data_value = snapshot.get("user_data")
             candidate_user_data = user_data_value if isinstance(user_data_value, dict) else {}
-            candidate_accounts = (
-                meta.get("username"),
-                candidate_user_data.get("email"),
-                candidate_user_data.get("username"),
-                candidate_user_data.get("account"),
-            )
-            if any(self._protocol_login_email_matches(str(candidate or "")) for candidate in candidate_accounts):
-                patched_user_data = with_current_server_urls(self.context, candidate_user_data)
-                if str(patched_user_data.get("rruid") or "").strip():
-                    return patched_user_data
+            patched_user_data = with_current_server_urls(self.context, candidate_user_data)
+            if (
+                str(patched_user_data.get("rruid") or "").strip()
+                and patched_user_data.get("uid") is not None
+            ):
+                # Preserve the imported rruid so Home Assistant reauth updates
+                # the existing config entry while still using the local login.
+                configured_email = self._protocol_login_email()
+                if configured_email:
+                    patched_user_data["email"] = configured_email
+                return patched_user_data
         return self._local_protocol_identity()
 
     @staticmethod

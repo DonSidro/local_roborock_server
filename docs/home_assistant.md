@@ -71,6 +71,7 @@ This applies whether your local stack is running via Docker Compose or via the H
 
 2. Find the Roborock entry and replace the endpoint values with your local stack URLs:
 
+   - `username` -> the email configured as `protocol_login_email` (you likely don't need to change this)
    - `base_url` -> `https://api-roborock.example.com:555`
    - `"a"` -> `https://api-roborock.example.com:555`
    - `"l"` -> `https://api-roborock.example.com:555`
@@ -81,6 +82,30 @@ This applies whether your local stack is running via Docker Compose or via the H
 3. If you changed `https_port` or `mqtt_tls_port`, use those values instead.
 
 4. Restart Home Assistant so the integration reloads the updated endpoints.
+
+5. Reconfigure the Roborock integration in Home Assistant and complete the code login:
+
+   - The account email must be the value configured as `protocol_login_email`.
+   - Use the 6 digit `protocol_login_pin` as the code.
+
+   Reauth updates the stored Roborock `user_data`, including the MQTT credentials derived from `rriot`.
+
+### First Time Home Assistant Setup
+
+Home Assistant currently creates a Roborock config entry through the official Roborock login flow. If you have never added the Roborock integration before, create the integration once with the official Roborock API, then stop the integration and edit `.storage/core.config_entries` as described above.
+
+After editing the endpoints and restarting Home Assistant, run **Reconfigure** on the Roborock integration and enter your local PIN. Home Assistant derives the MQTT username and password from `rriot.u`, `rriot.s`, and `rriot.k`; stale values commonly show up in the local server logs as:
+
+```text
+rejected MQTT CONNECT reason=invalid_mqtt_credentials
+```
+
+If you see that message after reauth, check that:
+
+- the local server has a cloud import snapshot from the same Roborock account as the Home Assistant entry
+- `base_url`, `rriot.r.a`, `rriot.r.l`, and `rriot.r.m` all point at the local stack
+- Home Assistant was fully restarted after editing `.storage/core.config_entries`
+- Reconfigure completed with `protocol_login_email` and `protocol_login_pin`
 
 ## Related Docs
 

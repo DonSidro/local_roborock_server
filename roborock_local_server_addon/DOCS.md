@@ -24,6 +24,8 @@ Then open `https://api-roborock.example.com:555/admin` using your configured `st
 
 This add-on does not auto-edit Home Assistant's Roborock config entry. You still need to update `.storage/core.config_entries` so Home Assistant points at your local stack.
 
+After updating `username`, `base_url`, `rriot.r.a`, `rriot.r.l`, and `rriot.r.m`, restart Home Assistant and use **Reconfigure** on the Roborock integration. Enter `protocol_login_email` as the account and `protocol_login_pin` as the code.
+
 ## Notes
 
 - This add-on expects internal LAN-only usage. Do not expose it directly to the internet.
