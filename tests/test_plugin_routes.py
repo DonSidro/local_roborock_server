@@ -1,3 +1,4 @@
+import json
 import urllib.parse
 from pathlib import Path
 
@@ -13,6 +14,11 @@ def _build_supervisor(tmp_path: Path) -> ReleaseSupervisor:
     config = load_config(config_file)
     paths = resolve_paths(config_file, config)
     return ReleaseSupervisor(config=config, paths=paths)
+
+
+def _source_from_proxied_url(url: str) -> str:
+    parsed = urllib.parse.urlsplit(url)
+    return urllib.parse.parse_qs(parsed.query).get("src", [""])[0]
 
 
 def test_api_v1_plugins_returns_proxied_category_urls(tmp_path: Path) -> None:
@@ -31,9 +37,74 @@ def test_api_v1_plugins_returns_proxied_category_urls(tmp_path: Path) -> None:
     for item in records:
         url = str(item["url"])
         assert url.startswith("https://api-roborock.example.com/plugin/proxy/")
-        parsed = urllib.parse.urlsplit(url)
-        source = urllib.parse.parse_qs(parsed.query).get("src", [""])[0]
+        source = _source_from_proxied_url(url)
         assert source.startswith("https://")
+
+
+def test_plugin_endpoints_prefer_cloud_snapshot_catalogs(tmp_path: Path) -> None:
+    supervisor = _build_supervisor(tmp_path)
+    snapshot = {
+        "web_api_cache": {
+            "plugin_catalogs": {
+                "plugins": {
+                    "data": {
+                        "categoryPluginList": [
+                            {
+                                "categoryId": 99,
+                                "category": "robot.vacuum.cleaner",
+                                "version": 9999,
+                                "apiLevel": 10043,
+                                "url": "https://files.roborock.com/iot/plugin/cloud-category.zip",
+                                "pluginLevel": 1,
+                            }
+                        ]
+                    }
+                },
+                "appfeatureplugin": {
+                    "data": {
+                        "plugins": [
+                            {
+                                "moduleType": "PERSONAL_CENTER",
+                                "version": 999,
+                                "apiLevel": 10043,
+                                "url": "https://app-files.roborock.com/iot/plugin/cloud-feature.zip",
+                                "pluginLevel": 3002,
+                                "scope": "cloud",
+                            }
+                        ]
+                    }
+                },
+                "appplugin": {
+                    "data": [
+                        {
+                            "version": 8888,
+                            "url": "https://rrpkg-us.roborock.com/iot/plugin/cloud-product.zip",
+                            "pluginLevel": 3001,
+                            "productid": 110,
+                            "apilevel": 10043,
+                        }
+                    ]
+                },
+            }
+        }
+    }
+    supervisor.paths.cloud_snapshot_path.write_text(json.dumps(snapshot) + "\n", encoding="utf-8")
+    client = TestClient(supervisor.app)
+
+    category_payload = client.get("/api/v1/plugins").json()
+    category_record = category_payload["data"]["categoryPluginList"][0]
+    assert category_record["version"] == 9999
+    assert _source_from_proxied_url(category_record["url"]) == "https://files.roborock.com/iot/plugin/cloud-category.zip"
+
+    feature_payload = client.get("/api/v1/appfeatureplugin").json()
+    feature_record = feature_payload["data"]["plugins"][0]
+    assert feature_record["version"] == 999
+    assert _source_from_proxied_url(feature_record["url"]) == "https://app-files.roborock.com/iot/plugin/cloud-feature.zip"
+
+    app_plugin_payload = client.get("/api/v1/appplugin").json()
+    app_plugin_record = app_plugin_payload["data"][0]
+    assert app_plugin_record["version"] == 8888
+    assert _source_from_proxied_url(app_plugin_record["url"]) == "https://rrpkg-us.roborock.com/iot/plugin/cloud-product.zip"
 
 
 def test_app_plugin_endpoints_return_proxied_urls(tmp_path: Path) -> None:
@@ -118,4 +189,3 @@ def test_non_plugin_routes_still_resolve_to_same_handlers(tmp_path: Path) -> Non
     )
     assert route_name == "user_info"
     assert payload["code"] == 200
-

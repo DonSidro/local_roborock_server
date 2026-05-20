@@ -5,7 +5,7 @@ from typing import Any
 from shared.context import ServerContext
 
 from ...auth.service import ok
-from ...plugin.common import APP_FEATURE_PLUGIN_LIST, proxied_plugin_records
+from ...plugin.common import APP_FEATURE_PLUGIN_LIST, plugin_records_with_snapshot_fallback, proxied_plugin_records
 
 
 def match(path: str) -> bool:
@@ -18,5 +18,11 @@ def build(
     _body_params: dict[str, list[str]],
     _clean_path: str,
 ) -> dict[str, Any]:
-    return ok({"plugins": proxied_plugin_records(ctx, APP_FEATURE_PLUGIN_LIST)})
+    records = plugin_records_with_snapshot_fallback(
+        ctx,
+        "appfeatureplugin",
+        APP_FEATURE_PLUGIN_LIST,
+        list_key="plugins",
+    )
+    return ok({"plugins": proxied_plugin_records(ctx, records)})
 

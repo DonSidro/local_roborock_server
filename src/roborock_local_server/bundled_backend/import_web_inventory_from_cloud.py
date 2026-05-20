@@ -353,6 +353,113 @@ async def _hawk_get_result(
     return response.get("result")
 
 
+async def _request_cloud_api_data(
+    api: RoborockApiClient,
+    user_data: UserData,
+    path: str,
+    *,
+    method: str = "get",
+    params: dict[str, Any] | None = None,
+    json_body: dict[str, Any] | None = None,
+) -> Any:
+    base_url = await api.base_url
+    header_clientid = getattr(api, "_get_header_client_id", lambda: "")()
+    headers = {"Authorization": str(user_data.token or "")}
+    if json_body is not None:
+        headers["Content-Type"] = "application/json"
+    request = PreparedRequest(base_url, api.session, {"header_clientid": header_clientid})
+    response = await request.request(method, path, params=params, json=json_body, headers=headers)
+    if not isinstance(response, dict):
+        raise RuntimeError(f"Unexpected response type for {path}: {type(response).__name__}")
+    if response.get("code") != 200:
+        raise RuntimeError(f"Cloud request failed for {path}: {response}")
+    return response.get("data")
+
+
+def _plugin_product_ids(home_data: HomeData) -> list[int]:
+    product_ids: set[int] = set()
+    for product in home_data.products or []:
+        try:
+            product_ids.add(int(product.id))
+        except (TypeError, ValueError):
+            continue
+    for device in _all_home_devices(home_data):
+        try:
+            product_ids.add(int(getattr(device, "product_id", 0) or 0))
+        except (TypeError, ValueError):
+            continue
+    return sorted(product_id for product_id in product_ids if product_id > 0)
+
+
+async def _fetch_plugin_catalogs(
+    api: RoborockApiClient,
+    user_data: UserData,
+    home_data: HomeData,
+) -> dict[str, Any]:
+    """Fetch app/plugin catalog metadata from cloud without making import depend on it."""
+    fetched_at = datetime.now(timezone.utc).isoformat()
+    catalogs: dict[str, Any] = {"fetched_at_utc": fetched_at}
+
+    async def fetch_catalog(
+        name: str,
+        path: str,
+        *,
+        method: str = "get",
+        params: dict[str, Any] | None = None,
+        json_body: dict[str, Any] | None = None,
+    ) -> None:
+        try:
+            catalogs[name] = {
+                "path": path,
+                "method": method.upper(),
+                "params": dict(params or {}),
+                "json": dict(json_body or {}),
+                "data": await _request_cloud_api_data(
+                    api,
+                    user_data,
+                    path,
+                    method=method,
+                    params=params,
+                    json_body=json_body,
+                ),
+            }
+        except Exception as exc:  # noqa: BLE001
+            catalogs[name] = {
+                "path": path,
+                "method": method.upper(),
+                "params": dict(params or {}),
+                "json": dict(json_body or {}),
+                "error": str(exc),
+            }
+
+    await fetch_catalog(
+        "appfeatureplugin",
+        "/api/v1/appfeatureplugin",
+        params={"type": 2, "apiLevel": 10043},
+    )
+    await fetch_catalog(
+        "plugins",
+        "/api/v1/plugins",
+        params={"type": 2, "apiLevel": 10043},
+    )
+    product_ids = _plugin_product_ids(home_data)
+    if product_ids:
+        await fetch_catalog(
+            "appplugin",
+            "/api/v1/appplugin",
+            method="post",
+            json_body={"type": 2, "apilevel": 10043, "productids": product_ids},
+        )
+    else:
+        catalogs["appplugin"] = {
+            "path": "/api/v1/appplugin",
+            "method": "POST",
+            "json": {"type": 2, "apilevel": 10043, "productids": []},
+            "error": "no product ids available",
+        }
+    return catalogs
+
+
 async def _fetch_additional_web_cache(
     api: RoborockApiClient,
     user_data: UserData,
@@ -413,6 +520,8 @@ async def _fetch_additional_web_cache(
         device_details[device_id] = dict(device_detail_result)
         device_extras[device_id] = await _hawk_get_result(api, user_data, f"/user/devices/{device_id}/extra")
 
+    plugin_catalogs = await _fetch_plugin_catalogs(api, user_data, home_data)
+
     return {
         "rooms": rooms,
         "home_scenes": home_scenes,
@@ -421,6 +530,7 @@ async def _fetch_additional_web_cache(
         "device_schedules": device_schedules,
         "device_details": device_details,
         "device_extras": device_extras,
+        "plugin_catalogs": plugin_catalogs,
     }
 
 

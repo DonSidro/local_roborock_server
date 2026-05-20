@@ -640,15 +640,13 @@ def device_jobs_payload(ctx: ServerContext, device_id: str) -> list[dict[str, An
     schedules: list[dict[str, Any]] = []
     for index, schedule in enumerate(schedules_raw):
         raw = schedule if isinstance(schedule, dict) else {}
-        schedules.append(
-            {
-                "id": as_int(get_value(raw, "id", default=index + 1), index + 1),
-                "cron": str(get_value(raw, "cron", default="0 0 * * *")),
-                "repeated": as_bool(get_value(raw, "repeated", default=True), True),
-                "enabled": as_bool(get_value(raw, "enabled", default=True), True),
-                "param": get_value(raw, "param", default={}) or {},
-            }
-        )
+        payload = dict(raw)
+        payload["id"] = as_int(get_value(raw, "id", default=index + 1), index + 1)
+        payload["cron"] = str(get_value(raw, "cron", default="0 0 * * *"))
+        payload["repeated"] = as_bool(get_value(raw, "repeated", default=True), True)
+        payload["enabled"] = as_bool(get_value(raw, "enabled", default=True), True)
+        payload["param"] = get_value(raw, "param", default={}) or {}
+        schedules.append(payload)
     return schedules
 
 

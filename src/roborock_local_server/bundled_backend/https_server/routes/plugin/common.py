@@ -11,6 +11,7 @@ import aiohttp
 from fastapi.responses import Response
 
 from shared.context import ServerContext
+from ..auth.service import load_cloud_full_snapshot
 
 PLUGIN_PROXY_ALLOWED_HOSTS = {
     "files.roborock.com",
@@ -129,6 +130,53 @@ def proxied_plugin_records(
             item[url_key] = plugin_proxy_url(ctx, source_url)
         proxied.append(item)
     return proxied
+
+
+def _snapshot_plugin_catalogs(ctx: ServerContext) -> dict[str, Any]:
+    snapshot = load_cloud_full_snapshot(ctx) or {}
+    web_cache = snapshot.get("web_api_cache")
+    if not isinstance(web_cache, dict):
+        return {}
+    catalogs = web_cache.get("plugin_catalogs")
+    return catalogs if isinstance(catalogs, dict) else {}
+
+
+def _catalog_data(catalogs: dict[str, Any], name: str) -> Any:
+    catalog = catalogs.get(name)
+    if not isinstance(catalog, dict):
+        return None
+    return catalog.get("data")
+
+
+def _dict_records(value: Any) -> list[dict[str, Any]]:
+    if not isinstance(value, list):
+        return []
+    return [dict(item) for item in value if isinstance(item, dict)]
+
+
+def snapshot_plugin_records(
+    ctx: ServerContext,
+    catalog_name: str,
+    *,
+    list_key: str | None = None,
+) -> list[dict[str, Any]]:
+    data = _catalog_data(_snapshot_plugin_catalogs(ctx), catalog_name)
+    if list_key is not None:
+        if not isinstance(data, dict):
+            return []
+        return _dict_records(data.get(list_key))
+    return _dict_records(data)
+
+
+def plugin_records_with_snapshot_fallback(
+    ctx: ServerContext,
+    catalog_name: str,
+    fallback_records: Sequence[dict[str, Any]],
+    *,
+    list_key: str | None = None,
+) -> list[dict[str, Any]]:
+    snapshot_records = snapshot_plugin_records(ctx, catalog_name, list_key=list_key)
+    return snapshot_records or list(fallback_records)
 
 
 def first_query_value(query_params: dict[str, list[str]], *keys: str) -> str:
