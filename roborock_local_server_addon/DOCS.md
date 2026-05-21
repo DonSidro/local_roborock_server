@@ -22,13 +22,19 @@ The add-on always runs the embedded MQTT broker and keeps the topic bridge enabl
 
 Then open `https://api-roborock.example.com:555/admin` using your configured `stack_fqdn` and HTTPS port.
 
+After the dashboard opens:
+
+1. Use the admin dashboard cloud import to fetch your Roborock account data.
+2. Confirm the expected vacuum appears in the inventory.
+3. Run onboarding from a second machine. If you copy the onboarding scripts to that machine, keep `start_onboarding_gui.py`, `ui.html`, and `onboarding_shared.py` together for the GUI flow, or keep `start_onboarding.py` and `onboarding_shared.py` together for the CLI flow.
+
 This add-on does not auto-edit Home Assistant's Roborock config entry. You still need to update `.storage/core.config_entries` so Home Assistant points at your local stack.
 
 After updating `username`, `base_url`, `rriot.r.a`, `rriot.r.l`, and `rriot.r.m`, restart Home Assistant and use **Reconfigure** on the Roborock integration. Enter `protocol_login_email` as the account and `protocol_login_pin` as the code.
 
 ## Notes
 
-- This add-on expects internal LAN-only usage. Do not expose it directly to the internet.
+- Local-only access is still the preferred setup. If you expose it for remote access, the server handles auth and can disable new devices from connecting, but any publicly accessible self-hosted service has risk.
 - If you change `https_port` or `mqtt_tls_port`, update your DNS/clients to use those ports.
 - The current server advertises the same hostname for HTTPS and MQTT/TLS, so Home Assistant's Roborock entry should normally use `ssl://api-roborock.example.com:8881`, not a separate `mqtt-...` hostname.
 - If you already manage certificates in another Home Assistant add-on such as Nginx Proxy Manager, you can point `cert_file` and `key_file` at that add-on's certs through `/all_addon_configs/...`. Example: `/all_addon_configs/a0d7b954_nginxproxymanager/letsencrypt/live/npm-3/fullchain.pem`.

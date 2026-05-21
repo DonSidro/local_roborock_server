@@ -52,6 +52,12 @@ Then open the admin dashboard at your configured stack hostname, for example:
 
 Do not use the Home Assistant UI hostname unless it is the same hostname covered by the TLS certificate you configured for `stack_fqdn`.
 
+After the dashboard opens, complete the same post-start steps as the Docker install:
+
+1. Use the admin dashboard cloud import to fetch your Roborock account data.
+2. Confirm the expected vacuum appears in the inventory.
+3. Run [Onboarding](onboarding.md) from a second machine to pair the vacuum to the local stack.
+
 If you need the MITM protocol sync secret for the Roborock app flow, sign in to the admin page and open **Protocol Auth**. The dashboard shows the active `admin.session_secret`, so you do not need to inspect `/data/config.toml` manually.
 
 ### Add-on Behavior

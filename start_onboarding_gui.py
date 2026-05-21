@@ -15,6 +15,7 @@ automatically
 
 from __future__ import annotations
 
+import argparse
 from dataclasses import dataclass, field
 import io
 import json
@@ -1047,7 +1048,12 @@ def _pick_free_port() -> int:
         return s.getsockname()[1]
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        description="Start the browser-based Roborock onboarding UI on 127.0.0.1."
+    )
+    parser.parse_args(argv)
+
     logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
     port = _pick_free_port()
     url = f"http://127.0.0.1:{port}/?token={_ACCESS_TOKEN}"

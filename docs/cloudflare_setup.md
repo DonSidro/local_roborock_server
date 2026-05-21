@@ -4,7 +4,11 @@ Use this optional guide if you want Cloudflare DNS-01 certificate issuance and a
 
 Cloudflare is used for DNS-01 validation against your zone so that the stack can request and renew certificates automatically. The ACME CA is configurable. The default and recommended choice for most users is ZeroSSL, and any deployment can switch to `actalis` if an older vacuum trusts that chain more reliably.
 
+DNS-01 validation only needs permission to create temporary TXT records in Cloudflare. It does not make the service reachable from the internet by itself, and local-only setups do not need public inbound access, public port forwarding, or Cloudflare proxying for the stack hostname.
+
 If you choose `acme_server = actalis`, you must also provide `acme_eab_kid` and `acme_eab_hmac_key` from your Actalis ACME account. Generated configs store those in separate secret files instead of embedding them directly in `config.toml`.
+
+Actalis provides the EAB KID and HMAC key from its ACME account setup. Create or sign in to an Actalis ACME account first, then copy both EAB values into the setup wizard or Home Assistant add-on options.
 
 The automated issuance shape differs by ACME CA:
 
@@ -25,6 +29,8 @@ Create a user API token in Cloudflare for the zone you will use in `tls.base_dom
 8. Copy the token secret immediately. Cloudflare only shows it once.
 
 For this project, keep the token limited to the single zone you are using. Do not use a global API key.
+
+If you also create a public DNS record for the stack hostname because you want remote access, remember that you are making a self-hosted service publicly accessible. The server handles auth and can disable new devices from connecting, but there is still always risk. Keep it local-only if that works for you.
 
 ## Related Docs
 

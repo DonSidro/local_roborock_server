@@ -21,6 +21,6 @@ COPY src /app/src
 
 RUN pip install --no-cache-dir /app
 
-EXPOSE 443 8883
+EXPOSE 555 8881
 
 CMD ["python", "-m", "roborock_local_server.container_entrypoint"]

@@ -10,15 +10,17 @@ If this is a brand new vacuum, it is still a good idea to set it up once in the 
 
 Run onboarding from a second machine, not from the machine hosting the local server:
 
+- It needs Python 3.11+ and `uv`.
+- It must be able to switch from your normal Wi-Fi to the vacuum's temporary Wi-Fi hotspot and back.
+- It must resolve your `api-...` stack hostname to the server's LAN IP when it is back on your normal Wi-Fi.
+
 ```bash
 uv run start_onboarding.py --server api-roborock.example.com
 ```
 
 If you omit the port, the CLI assumes the default local stack HTTPS port `555`. If your stack uses a custom HTTPS port, include it in `--server`, for example `api-roborock.example.com:8443`.
 
-This is a standalone script — you can copy `start_onboarding.py` to any machine and run it with just `uv`.
-
-If you omit the port, the CLI assumes the default local stack HTTPS port `555`. If your stack uses a custom HTTPS port, include it in `--server`, for example `api-roborock.example.com:8443`.
+This can be run from a checkout of this repository. If you copy the CLI to another machine instead, keep `start_onboarding.py` and `onboarding_shared.py` together in the same directory and run it with `uv`.
 
 Onboarding has a hard `token.r` limit of 32 characters after normalization to the final `host[:port]/` value sent to the vacuum. 
 
@@ -126,7 +128,7 @@ A live log pane below the stepper shows every packet, status check, and state tr
 
 Your inputs live only in memory for the duration of the run and are discarded when you click Quit or shut down the server.
 
-Unlike `start_onboarding.py`, the GUI flow is a two-file standalone bundle: keep `start_onboarding_gui.py` and `ui.html` together.
+Unlike `start_onboarding.py`, the GUI flow also serves the local HTML file. If you copy it to another machine, keep `start_onboarding_gui.py`, `ui.html`, and `onboarding_shared.py` together in the same directory.
 
 ### Same caveats as the CLI
 

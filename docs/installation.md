@@ -11,9 +11,17 @@ After the stack is running, continue with [Onboarding](onboarding.md) to pair a 
 
 - A domain name that you own
 - A place to run the stack on your LAN
-- A second machine for onboarding later
+- A second machine for onboarding later. It needs Python 3.11+ and `uv` if you run the onboarding scripts there.
 - A network that can host the stack's HTTPS and MQTT TLS ports internally. The defaults are `555` and `8881`.
 - A Cloudflare API token with DNS edit access for the zone if you want Cloudflare DNS-01 auto-renew. See [Cloudflare setup](cloudflare_setup.md).
+
+## Credential Names
+
+The setup uses three different credentials:
+
+- The **admin password** signs in to the local server dashboard at `/admin`.
+- The **protocol login email and PIN** are the local login that Home Assistant or the Roborock app use after you repoint them to this server.
+- Your **Roborock cloud email and verification code** are used only by the admin dashboard's cloud import flow so the local server can fetch your current homes, rooms, routines, and known vacuums.
 
 ## Choose Your Certificate Path First
 
@@ -35,9 +43,26 @@ If your model already has certificate notes on the tested-vacuums page, follow t
 
    For example, if you own `example.com`, use `api-roborock.example.com`. Throughout the docs this is the **stack FQDN**.
 
-2. Your network **must** handle its own DNS for the network the vacuum connects to. If it uses an external DNS server like `8.8.8.8`, this will not work.
+   Onboarding also has a hard 32-character limit for the final `host[:port]/` value sent to the vacuum after the `api-` prefix is stripped. Short names are safer:
 
-3. Create a DNS record pointing your stack FQDN to the local IP of the machine running the stack.
+   - `api-rr.example.com` with the default port becomes `rr.example.com:555/` and fits.
+   - `api-roborock-local-server.example.com` with the default port becomes `roborock-local-server.example.com:555/` and is too long.
+
+2. Your network **must** handle its own DNS for the network the vacuum connects to. If the vacuum, phone, or onboarding machine uses an external DNS server like `8.8.8.8`, this will not work.
+
+3. Create a local DNS record pointing your stack FQDN to the LAN IP of the machine running the stack.
+
+   This should be split-horizon or local DNS through your router, Pi-hole, AdGuard Home, Unbound, or similar. Cloudflare DNS-01 certificate issuance does not require public inbound access, public port forwarding, or Cloudflare proxying.
+
+   If you want the stack to work away from your home network, the server does handle auth and lets you disable new devices from connecting. That still makes this a publicly accessible self-hosted service, so only do it if you know what you are doing. Local-only access is always the better option when it fits your workflow.
+
+4. From a client on the same network the vacuum will use, verify the name resolves to the server's LAN IP:
+
+   ```bash
+   nslookup api-roborock.example.com
+   ```
+
+   For the first setup and onboarding flow, your home network clients should resolve this name to the server's LAN IP. If they resolve to a public IP, make sure your router and firewall setup intentionally support that path before continuing.
 
    With the current server behavior, the same hostname is advertised for both HTTPS and MQTT/TLS, so you do not need a separate `mqtt-...` hostname unless you have built your own custom client routing around one.
 
@@ -101,6 +126,14 @@ If your model already has certificate notes on the tested-vacuums page, follow t
    docker compose up -d --build
    ```
 
+   In PowerShell:
+
+   ```powershell
+   $env:ROBOROCK_SERVER_HTTPS_PORT = "8443"
+   $env:ROBOROCK_SERVER_MQTT_TLS_PORT = "9443"
+   docker compose up -d --build
+   ```
+
 ## Method 2: Home Assistant Add-on
 
 Use [Home Assistant](home_assistant.md) as the installation guide if you want to run the stack as a Home Assistant add-on instead of Docker Compose.
@@ -109,9 +142,17 @@ Use [Home Assistant](home_assistant.md) as the installation guide if you want to
 
 1. Open the admin dashboard at `https://api-roborock.example.com:555/admin` by default, or `https://api-roborock.example.com:YOUR_HTTPS_PORT/admin` if you chose a custom HTTPS port.
 
-2. Import your data from the cloud so things like routines and rooms will work. Enter your email under cloud import, select **Send code**, then enter the returned code and select **Fetch data**.
+2. If the page does not load, check the container and DNS before onboarding:
 
-3. For any routines that use zones, re-save them so the server stores the zone data correctly. In the Roborock app, open each routine that has zones, open the zone, tap **Edit**, open any **Zone Cleaning** entry, then tap **Save**. Repeat for each zone in the routine.
+   ```bash
+   docker compose ps
+   docker compose logs -f roborock-local-server
+   nslookup api-roborock.example.com
+   ```
+
+3. Import your data from the cloud so things like routines and rooms will work. Enter your Roborock cloud email under cloud import, select **Send code**, then enter the returned code and select **Fetch data**.
+
+4. For any routines that use zones, re-save them so the server stores the zone data correctly. In the Roborock app, open each routine that has zones, open the zone, tap **Edit**, open any **Zone Cleaning** entry, then tap **Save**. Repeat for each zone in the routine.
 
 ## Next Steps
 

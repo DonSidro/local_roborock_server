@@ -24,6 +24,12 @@ The following vacuums are confirmed working:
 
 Certificate reports:
 
+Legend:
+
+- Check mark: reported working
+- Cross: reported not working
+- Question mark: not reported yet
+
 | Vacuum | ZeroSSL / Cloudflare | Actalis | Let's Encrypt | SSL.com |
 |---|---:|---:|---:|---:|
 | Roborock S5 Max | ❌ | ✅ | ❌ | ❓ |
@@ -37,6 +43,10 @@ Certificate reports:
 | QRevo MaxV | ❓ | ❓ | ❓ | ❓ |
 | QRevo Master | ❓ | ❓ | ❓ | ❓ |
 | QRevo Plus | ✅ | ❓ | ❓ | ❓ |
+
+## Unlisted Vacuums
+
+If your model is not listed, start with ZeroSSL unless it is an older model that is likely to need a different trusted chain. If onboarding fails after the DNS and server checks pass, try Actalis or a provided certificate and report the result.
 
 ## Unsupported Vacuums
 
