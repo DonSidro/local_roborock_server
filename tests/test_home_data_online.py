@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 
 from fastapi.testclient import TestClient
+import pytest
 from roborock.data import HomeData
 
 from conftest import write_release_config
@@ -340,7 +341,8 @@ def test_device_detail_uses_runtime_connection_and_preserves_inventory_fields(tm
     assert device_data["deviceStatus"] == {"121": 10, "122": 99}
 
 
-def test_home_data_preserves_last_working_app_contract(tmp_path: Path) -> None:
+@pytest.mark.parametrize("home_path", ["/v3/user/homes/1233716", "/v4/user/homes/1233716"])
+def test_home_data_preserves_last_working_app_contract(tmp_path: Path, home_path: str) -> None:
     config_file = write_release_config(tmp_path)
     config = load_config(config_file)
     paths = resolve_paths(config_file, config)
@@ -423,7 +425,7 @@ def test_home_data_preserves_last_working_app_contract(tmp_path: Path) -> None:
     supervisor.refresh_inventory_state()
 
     client = TestClient(supervisor.app)
-    response = client.get("/v3/user/homes/1233716", headers=_hawk_headers(paths.cloud_snapshot_path, "/v3/user/homes/1233716"))
+    response = client.get(home_path, headers=_hawk_headers(paths.cloud_snapshot_path, home_path))
     assert response.status_code == 200
 
     home_data = response.json()["data"]

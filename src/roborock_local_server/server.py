@@ -717,7 +717,7 @@ class ReleaseSupervisor:
         normalized = cls._normalized_path(clean_path)
         if cls._is_public_protocol_path(normalized):
             return None
-        if normalized.startswith(("/user/", "/v2/user/", "/v3/user/")):
+        if normalized.startswith(("/user/", "/v2/user/", "/v3/user/", "/v4/user/")):
             return "hawk"
         if normalized.startswith("/api/"):
             return "token"

@@ -139,6 +139,23 @@ def test_protected_routes_require_native_token_and_hawk_auth(tmp_path: Path) -> 
     assert authed_inbox.status_code == 200
     assert authed_inbox.json()["data"]["count"] == 0
 
+    unauth_v4_home = client.get("/v4/user/homes/12345")
+    assert unauth_v4_home.status_code == 401
+    assert unauth_v4_home.json()["code"] == 40101
+    assert unauth_v4_home.json()["data"]["auth"] == "hawk"
+
+    v4_home_headers = {
+        "Authorization": build_hawk_authorization(
+            user=user,
+            path="/v4/user/homes/12345",
+            timestamp=int(time.time()),
+            nonce="nonce-protocol-auth-v4-home",
+        )
+    }
+    authed_v4_home = client.get("/v4/user/homes/12345", headers=v4_home_headers)
+    assert authed_v4_home.status_code == 200
+    assert authed_v4_home.json()["data"]["id"] == 12345
+
 
 def test_token_auth_failures_use_roborock_invalid_credentials_code(tmp_path: Path) -> None:
     supervisor, _paths = _build_supervisor(tmp_path)

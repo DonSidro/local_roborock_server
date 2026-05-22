@@ -11,7 +11,7 @@ from .service import home_payload
 
 def match(path: str) -> bool:
     clean = path.rstrip("/")
-    return bool(re.fullmatch(r"/(?:(?:v2|v3)/)?user/homes/[^/]+", clean))
+    return bool(re.fullmatch(r"/(?:(?:v2|v3|v4)/)?user/homes/[^/]+", clean))
 
 
 def build(
