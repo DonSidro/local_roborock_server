@@ -6,7 +6,6 @@ The best way to support this project is the next time you are buying a Roborock 
 
 [![Amazon Affiliate][badge-amazon]][link-amazon]
 [![Roborock Affiliate][badge-roborock-affiliate]][link-roborock-affiliate]
-[![Roborock 5 Off][badge-roborock-discount]][link-roborock-discount]
 
 You can also support via BMAC or paypal:
 
@@ -88,7 +87,7 @@ This project is licensed under the MIT License — see [LICENSE](LICENSE) for de
 [badge-bmac]: https://img.shields.io/badge/Buy%20Me%20a%20Coffee-donate-yellow?style=for-the-badge&logo=buymeacoffee&logoColor=black
 [link-paypal]: https://paypal.me/LLashley304
 [badge-paypal]: https://img.shields.io/badge/PayPal-donate-00457C?style=for-the-badge&logo=paypal&logoColor=white
-[link-roborock-discount]: https://us.roborock.com/discount/RRSAP202602071713342D18X?redirect=%2Fpages%2Froborock-store%3Fuuid%3DEQe6p1jdZczHEN4Q0nbsG9sZRm0RK1gW5eSM%252FCzcW4Q%253D
+[link-roborock-discount]: https://us.roborock.com/discount/RRSAP202602071713342D18X?redirect=%2Fpages%2Froborock-store%3Fuuid%3D1%252Fp%252BWrcqT1xRYq8L%252BUYzTWBIY60X%252B2PG0yz8rsSeSmY%253D
 [badge-roborock-discount]: https://img.shields.io/badge/Roborock-5%25%20Off-C00000?style=for-the-badge
 [link-roborock-affiliate]: https://roborock.pxf.io/B0VYV9
 [badge-roborock-affiliate]: https://img.shields.io/badge/Roborock-affiliate-B22222?style=for-the-badge
