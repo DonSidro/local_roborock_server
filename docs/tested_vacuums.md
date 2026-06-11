@@ -36,36 +36,26 @@ These are (maybe) using the same firmware as the two above. Any vacuum released 
 
 The following vacuums are confirmed working:
 
-- Roborock S5 Max
-- Roborock S7 / S7 MaxV
-- Roborock S8 Pro Ultra (a70)
-- Roborock Saros 10R / G30U
-- Roborock Qrevo S5V
-- QRevo MaxV
-- QRevo Master
-- QRevo Plus
-
-Certificate reports:
-
 Legend:
 
 - Check mark: reported working
 - Cross: reported not working
 - Question mark: not reported yet
 
-| Vacuum | ZeroSSL / Cloudflare | Actalis | Let's Encrypt | SSL.com |
-|---|---:|---:|---:|---:|
-| Roborock S5 Max | ❌ | ✅ | ❌ | ❓ |
-| Roborock S7 | ❓ | ✅ | ❌ | ✅ |
-| Roborock S7 MaxV | ✅ | ❓ | ❓ | ❓ |
-| Roborock S8 | ❓ | ❓ | ❓ | ❓ |
-| Roborock S8 Pro Ultra (a70) | ❓ | ❓ | ❓ | ❓ |
-| Roborock Saros 10R | ✅ | ❓ | ✅ | ❓ |
-| Roborock G30U | ✅ | ❓ | ❓ | ❓ |
-| Roborock Qrevo S5V | ❓ | ❓ | ❓ | ❓ |
-| QRevo MaxV | ✅ | ❓ | ✅ | ❓ |
-| QRevo Master | ❓ | ❓ | ❓ | ❓ |
-| QRevo Plus | ✅ | ❓ | ❓ | ❓ |
+| Vacuum | Firmware | ZeroSSL / Cloudflare | Actalis | Let's Encrypt | SSL.com |
+|---|---:|---:|---:|---:|---:|
+| Roborock S5 Max | Not reported | ❌ | ✅ | ❌ | ❓ |
+| Roborock S7 | Not reported | ❓ | ✅ | ❌ | ✅ |
+| Roborock S7 MaxV | Not reported | ✅ | ❓ | ❓ | ❓ |
+| Roborock S8 | Not reported | ❓ | ❓ | ❓ | ❓ |
+| Roborock S8 MaxV Ultra | Not reported | ✅ | ❓ | ❓ | ❓ |
+| Roborock S8 Pro Ultra (a70) | Not reported | ❓ | ❓ | ❓ | ❓ |
+| Roborock Saros 10R | `02.52.32` | ✅ | ❓ | ✅ | ❓ |
+| Roborock G30U | `02.52.32` | ✅ | ❓ | ❓ | ❓ |
+| Roborock Qrevo S5V | Not reported | ❓ | ❓ | ❓ | ❓ |
+| QRevo MaxV | Not reported | ✅ | ❓ | ✅ | ❓ |
+| QRevo Master | Not reported | ❓ | ❓ | ❓ | ❓ |
+| QRevo Plus | Not reported | ✅ | ❓ | ❓ | ❓ |
 
 ## Unlisted Vacuums
 
