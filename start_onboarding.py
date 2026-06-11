@@ -237,6 +237,8 @@ def format_device_label(device: dict[str, Any], *, disambiguator: str = "") -> s
         _format_bool_label(bool(device.get("connected")), "Connected", "Disconnected"),
         f"{samples} Query Samples",
     ]
+    if bool(onboarding.get("unsupported")):
+        labels.insert(0, "Unsupported")
     return f"{name} [{' ] ['.join(labels)}]"
 
 
@@ -559,6 +561,8 @@ def poll_session_until_progress(
             continue
         if str(latest.get("identity_conflict") or "").strip():
             return "conflict", latest
+        if bool(latest.get("unsupported")):
+            return "unsupported", latest
         if bool(latest.get("connected")):
             return "connected", latest
         if bool(latest.get("has_public_key")) and not baseline_has_public_key:
@@ -663,6 +667,8 @@ def run_guided_onboarding(
                 if result == "sample_increased":
                     output.write("The sample count increased. Repeat the pairing cycle to collect more onboarding data.\n")
                     continue
+                if result == "unsupported":
+                    output.write("This vacuum is not supported by the current onboarding flow.\n")
                 if result == "timeout" and baseline_has_public_key and bool(status.get("has_public_key")):
                     output.write(
                         "The public key was already ready, but the vacuum did not finish connecting within the timeout. "

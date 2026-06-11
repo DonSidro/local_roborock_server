@@ -312,3 +312,34 @@ def test_runtime_state_onboarding_device_mqtt_candidate_requires_matching_ip_and
     assert candidate["did"] == "1103821560705"
     assert candidate["duid"] == "cloud-q7-a"
     assert state.onboarding_device_mqtt_candidate(client_ip="192.168.8.11") is None
+
+
+def test_runtime_state_marks_region_v2_onboarding_as_unsupported(tmp_path: Path) -> None:
+    state = RuntimeState(log_dir=tmp_path, key_state_file=None)
+    state.upsert_vacuum("cloud-saros-a", name="Saros", id_kind="duid")
+    state.start_onboarding_session(target_duid="cloud-saros-a", target_name="Saros")
+
+    event_time = datetime.now(timezone.utc).isoformat()
+    state.record_http_event(
+        event_time=event_time,
+        route_name="region",
+        clean_path="/region",
+        raw_path="/region?did=1103821560705",
+        method="GET",
+        host="api-roborock.example.com",
+        remote="192.168.8.10:54321",
+        did="1103821560705",
+        region_version="v2",
+    )
+
+    [vacuum] = state.vacuum_snapshot()
+    assert vacuum["last_region_version"] == "v2"
+    assert vacuum["onboarding"]["status"] == "unsupported"
+    assert vacuum["onboarding"]["unsupported"] is True
+    assert vacuum["onboarding"]["unsupported_reason"] == "region_v2"
+    assert "v2 /region onboarding flow" in vacuum["onboarding"]["guidance"]
+
+    session = state.onboarding_session_snapshot()
+    assert session["status"] == "unsupported"
+    assert session["unsupported"] is True
+    assert session["unsupported_reason"] == "region_v2"

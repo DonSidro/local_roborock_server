@@ -141,6 +141,16 @@ def _admin_dashboard_html(project_support: dict[str, Any]) -> str:
             addField(card, "Num query samples", Number(keyState.query_samples || 0));
             addField(card, "Public Key determined", yesNo(Boolean(onboarding.has_public_key)));
             addField(card, "Mqtt connected", yesNo(Boolean(vacuum.connected)));
+            if (onboarding.unsupported) {{
+              const alert = document.createElement("div");
+              alert.textContent = onboarding.guidance || "This vacuum is not supported by the current onboarding flow.";
+              alert.style.marginTop = "10px";
+              alert.style.padding = "8px";
+              alert.style.border = "1px solid #c2410c";
+              alert.style.background = "#fff7ed";
+              alert.style.color = "#7c2d12";
+              card.appendChild(alert);
+            }}
             container.appendChild(card);
           }}
         }}

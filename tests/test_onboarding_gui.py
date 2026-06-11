@@ -96,3 +96,45 @@ def test_gui_poll_final_cycle_waits_for_connection_when_public_key_already_ready
     assert outcome == "connected"
     assert latest["connected"] is True
     assert waits == [5.0]
+
+
+def test_gui_poll_returns_unsupported_without_waiting(monkeypatch: pytest.MonkeyPatch) -> None:
+    class UnsupportedApi:
+        def get_session(self, *, session_id: str) -> dict:
+            assert session_id == "sess-1"
+            return {
+                "session_id": session_id,
+                "query_samples": 0,
+                "has_public_key": False,
+                "connected": False,
+                "unsupported": True,
+                "unsupported_reason": "region_v2",
+            }
+
+    waits: list[float] = []
+    monkeypatch.setattr("start_onboarding_gui.POLL_TIMEOUT_SECONDS", 20.0)
+    monkeypatch.setattr("start_onboarding_gui.POLL_INTERVAL_SECONDS", 5.0)
+
+    class _ImmediateCond:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb) -> bool:
+            return False
+
+        def wait(self, timeout=None):
+            waits.append(timeout)
+            return None
+
+    monkeypatch.setattr("start_onboarding_gui._state_cond", _ImmediateCond())
+
+    outcome, latest = _poll_until_progress(
+        UnsupportedApi(),
+        "sess-1",
+        0,
+        baseline_has_public_key=False,
+    )
+
+    assert outcome == "unsupported"
+    assert latest["unsupported"] is True
+    assert waits == []

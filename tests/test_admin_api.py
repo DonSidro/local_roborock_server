@@ -598,6 +598,88 @@ def test_onboarding_signed_query_fallback_uses_active_target_and_triggers_recove
     assert recovery_calls == ["1103821560705"]
 
 
+def test_region_v2_request_surfaces_unsupported_onboarding_alert(tmp_path: Path) -> None:
+    config_file = write_release_config(tmp_path)
+    config = load_config(config_file)
+    paths = resolve_paths(config_file, config)
+    paths.inventory_path.parent.mkdir(parents=True, exist_ok=True)
+    paths.inventory_path.write_text(
+        json.dumps(
+            {
+                "devices": [
+                    {
+                        "duid": "cloud-saros-a",
+                        "name": "Saros",
+                        "model": "roborock.vacuum.a279",
+                        "product_id": "product-saros-a",
+                        "local_key": "local-key-a",
+                    }
+                ]
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    paths.runtime_credentials_path.parent.mkdir(parents=True, exist_ok=True)
+    paths.runtime_credentials_path.write_text(
+        json.dumps(
+            {
+                "schema_version": 2,
+                "devices": [
+                    {
+                        "did": "1103821560705",
+                        "duid": "cloud-saros-a",
+                        "name": "Saros",
+                        "model": "roborock.vacuum.a279",
+                        "product_id": "product-saros-a",
+                        "localkey": "local-key-a",
+                    }
+                ],
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    supervisor = ReleaseSupervisor(config=config, paths=paths)
+    supervisor.runtime_state.start_onboarding_session(
+        target_duid="cloud-saros-a",
+        target_name="Saros",
+        target_did="1103821560705",
+    )
+
+    client = TestClient(supervisor.app)
+    region = client.get(
+        "/region?did=1103821560705&pid=roborock.vacuum.a279",
+        headers={"v": "v2", "s": "QUJD", "n": "nonce-a", "t": "1234567890"},
+    )
+    assert region.status_code == 200
+
+    key_state = json.loads(paths.device_key_state_path.read_text(encoding="utf-8"))
+    header_samples = key_state["devices"]["1103821560705"]["header_samples"]
+    assert header_samples == [
+        {
+            "method": "GET",
+            "path": "/region",
+            "query": "did=1103821560705&pid=roborock.vacuum.a279",
+            "nonce": "nonce-a",
+            "ts": "1234567890",
+            "signature_b64": "QUJD",
+            "body_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "signature_len": "3",
+        }
+    ]
+
+    login = client.post("/admin/api/login", json={"password": "correct horse battery staple"})
+    assert login.status_code == 200
+    devices = client.get("/admin/api/onboarding/devices")
+    assert devices.status_code == 200
+    [device] = devices.json()["devices"]
+    assert device["onboarding"]["status"] == "unsupported"
+    assert device["onboarding"]["unsupported"] is True
+    assert device["onboarding"]["unsupported_reason"] == "region_v2"
+    assert "v2 /region onboarding flow" in device["onboarding"]["guidance"]
+
+
 def test_core_only_mode_disables_standalone_admin_routes(tmp_path: Path) -> None:
     config_file = write_release_config(tmp_path)
     config = load_config(config_file)

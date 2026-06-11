@@ -229,6 +229,8 @@ def _merge_vacuum_state(
                     "public_key_ready": False,
                     "status": "collecting_messages",
                     "guidance": "Waiting for onboarding traffic from this vacuum.",
+                    "unsupported": False,
+                    "unsupported_reason": "",
                     "key_state": {
                         "query_samples": 0,
                         "header_samples": 0,

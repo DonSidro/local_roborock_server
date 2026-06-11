@@ -290,6 +290,37 @@ def test_poll_session_final_cycle_waits_for_connection_when_public_key_already_r
     assert "Waiting for the server to observe new onboarding traffic..." in output.getvalue()
 
 
+def test_poll_session_returns_unsupported_without_waiting() -> None:
+    class UnsupportedApi:
+        def get_session(self, *, session_id: str) -> dict:
+            assert session_id == "sess-1"
+            return {
+                "session_id": session_id,
+                "query_samples": 0,
+                "has_public_key": False,
+                "connected": False,
+                "unsupported": True,
+                "unsupported_reason": "region_v2",
+                "guidance": "This vacuum uses the v2 /region onboarding flow.",
+            }
+
+    sleeps: list[float] = []
+    result, status = poll_session_until_progress(
+        UnsupportedApi(),
+        session_id="sess-1",
+        baseline_samples=0,
+        baseline_status={"session_id": "sess-1", "query_samples": 0, "has_public_key": False},
+        output=StringIO(),
+        poll_interval_seconds=5.0,
+        timeout_seconds=20.0,
+        sleep_fn=sleeps.append,
+    )
+
+    assert result == "unsupported"
+    assert status["unsupported"] is True
+    assert sleeps == []
+
+
 def test_guided_onboarding_timeout_can_retry_without_restart(
     monkeypatch: pytest.MonkeyPatch,
     config: GuidedOnboardingConfig,

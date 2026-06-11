@@ -248,6 +248,8 @@ def format_device_label(device: dict[str, Any], *, disambiguator: str = "") -> s
         _format_bool_label(bool(device.get("connected")), "Connected", "Disconnected"),
         f"{samples} Query Samples",
     ]
+    if bool(onboarding.get("unsupported")):
+        labels.insert(0, "Unsupported")
     return f"{name} [{' ] ['.join(labels)}]"
 
 
@@ -652,6 +654,8 @@ def _poll_until_progress(
             latest = latest or {}
         if str(latest.get("identity_conflict") or "").strip():
             return "conflict", latest
+        if bool(latest.get("unsupported")):
+            return "unsupported", latest
         if bool(latest.get("connected")):
             return "connected", latest
         if bool(latest.get("has_public_key")) and not baseline_has_public_key:
@@ -809,6 +813,11 @@ def _run_onboarding_for_device(
                 _set_phase("done", status=status_serialized,
                            result_message="Identity conflict detected.",
                            result_detail=str(latest.get("identity_conflict") or ""),
+                           can_continue=False)
+            elif outcome == "unsupported":
+                _set_phase("done", status=status_serialized,
+                           result_message="Vacuum unsupported.",
+                           result_detail=str(latest.get("guidance") or "This vacuum is not supported by the current onboarding flow."),
                            can_continue=False)
             else:
                 timeout_detail = "The server did not observe new onboarding traffic within the timeout."

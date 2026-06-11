@@ -934,6 +934,11 @@ class ReleaseSupervisor:
         if not key_capture_did and self._allows_onboarding_key_capture_fallback(clean_path, request.url.query):
             key_capture_did = self.runtime_state.active_onboarding_target_did()
         key_cache = self.context.device_key_cache()
+        request_headers = dict(request.headers)
+        region_version = _pick_first_header(
+            request_headers,
+            ("v", "version", "x-version", "x_roborock_version", "x-roborock-version"),
+        )
 
         query_sample_added = False
         header_sample_added = False
@@ -944,17 +949,17 @@ class ReleaseSupervisor:
                 except Exception as exc:  # noqa: BLE001
                     logger.warning("key_cache add_signed_query failed did=%s: %s", key_capture_did, exc)
             sign = _pick_first_header(
-                dict(request.headers),
-                ("sign", "x-sign", "x_roborock_sign", "x-roborock-sign"),
+                request_headers,
+                ("sign", "s", "x-sign", "x_roborock_sign", "x-roborock-sign"),
             )
             if sign:
                 nonce = _pick_first_header(
-                    dict(request.headers),
-                    ("nonce", "x-nonce", "x_roborock_nonce", "x-roborock-nonce"),
+                    request_headers,
+                    ("nonce", "n", "x-nonce", "x_roborock_nonce", "x-roborock-nonce"),
                 )
                 ts = _pick_first_header(
-                    dict(request.headers),
-                    ("ts", "timestamp", "x-timestamp", "x_roborock_ts", "x-roborock-ts"),
+                    request_headers,
+                    ("ts", "t", "timestamp", "x-timestamp", "x_roborock_ts", "x-roborock-ts"),
                 )
                 try:
                     header_sample_added = key_cache.add_header_signature(
@@ -983,7 +988,7 @@ class ReleaseSupervisor:
             "raw_path": raw_path,
             "clean_path": clean_path,
             "query": {key: value for key, value in query_params.items()},
-            "headers": _headers_for_log(dict(request.headers)),
+            "headers": _headers_for_log(request_headers),
             "body_len": len(raw_body),
             "body_sha256": body_sha256,
             "remote": f"{client_host}:{client_port}",
@@ -1289,6 +1294,7 @@ class ReleaseSupervisor:
                 remote=str(entry["remote"]),
                 did=explicit_did or None,
                 pid=explicit_pid or None,
+                region_version=region_version if route_name == "region" else None,
             )
         except Exception as exc:  # noqa: BLE001
             logger.warning("runtime_state record_http_event failed: %s", exc)
@@ -1350,6 +1356,8 @@ class ReleaseSupervisor:
                         "has_public_key": bool(onboarding.get("has_public_key")),
                         "status": str(onboarding.get("status") or "").strip(),
                         "guidance": str(onboarding.get("guidance") or "").strip(),
+                        "unsupported": bool(onboarding.get("unsupported")),
+                        "unsupported_reason": str(onboarding.get("unsupported_reason") or "").strip(),
                         "key_state": {
                             "query_samples": int(key_state.get("query_samples") or 0),
                         },

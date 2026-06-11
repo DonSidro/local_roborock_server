@@ -30,6 +30,10 @@ PAIRING_STEP_LABELS = {
     "public_key": "Public key",
     "connected": "Connected",
 }
+REGION_V2_UNSUPPORTED_GUIDANCE = (
+    "This vacuum uses the v2 /region onboarding flow, which is not supported by local_roborock_server yet. "
+    "These models usually stop after /region and never reach NC Prepare."
+)
 _TRACKED_ONBOARDING_STEPS = set(ONBOARDING_STEP_LABELS.keys())
 _D_TOPIC_RE = re.compile(r"^rr/d/[io]/([^/]+)/([^/]+)$")
 _M_TOPIC_RE = re.compile(r"^rr/m/[io]/[^/]+/[^/]+/([^/]+)$")
@@ -170,9 +174,11 @@ class RuntimeState:
         remote: str,
         did: str | None,
         pid: str | None = None,
+        region_version: str | None = None,
     ) -> None:
         ip = _extract_ip(remote)
         normalized_pid = (pid or "").strip()
+        normalized_region_version = (region_version or "").strip().lower()
         step_name = route_name if route_name in _TRACKED_ONBOARDING_STEPS else None
         with self._lock:
             resolved_did = (did or "").strip()
@@ -197,6 +203,8 @@ class RuntimeState:
                 "did": resolved_did or did,
                 "pid": normalized_pid,
             }
+            if normalized_region_version:
+                event["region_version"] = normalized_region_version
             if storage_id and storage_id != resolved_did:
                 event["duid"] = storage_id
             self._recent_events.append(event)
@@ -224,6 +232,10 @@ class RuntimeState:
                 if ip:
                     vac["ips"].add(ip)
                     vac["last_ip"] = ip
+                if route_name == "region" and normalized_region_version:
+                    vac["last_region_version"] = normalized_region_version
+                    if normalized_region_version == "v2":
+                        vac["unsupported_reason"] = "region_v2"
                 vac["last_http_at"] = event_time
                 vac["last_http_route"] = route_name
                 vac["last_http_path"] = clean_path
@@ -487,6 +499,7 @@ class RuntimeState:
             "last_http_path": "",
             "last_http_remote": "",
             "last_http_host": "",
+            "last_region_version": "",
             "last_mqtt_at": "",
             "last_mqtt_topic": "",
             "last_mqtt_direction": "",
@@ -496,6 +509,7 @@ class RuntimeState:
             "last_message_at": "",
             "last_message_source": "",
             "onboarding_steps": {},
+            "unsupported_reason": "",
             "restored_activity": False,
         }
         self._vacuums[normalized] = created
@@ -524,6 +538,9 @@ class RuntimeState:
             if not target.get(field) and source.get(field):
                 target[field] = source[field]
         target["ips"].update(source.get("ips") or set())
+        for field in ("last_region_version", "unsupported_reason"):
+            if not target.get(field) and source.get(field):
+                target[field] = source[field]
         for step, step_time in (source.get("onboarding_steps") or {}).items():
             existing_time = str(target["onboarding_steps"].get(step) or "")
             if not existing_time or _is_newer_timestamp(str(step_time or ""), existing_time):
@@ -619,6 +636,8 @@ class RuntimeState:
             "public_key_state": "missing",
             "connected": False,
             "identity_conflict": "",
+            "unsupported": False,
+            "unsupported_reason": "",
             "checks": {key: False for key in PAIRING_STEP_LABELS},
             "steps": [
                 {
@@ -712,10 +731,15 @@ class RuntimeState:
         checks = {key: bool(value) for key, value in step_times.items()}
 
         identity_conflict = str(session.get("identity_conflict") or "").strip()
+        unsupported_reason = self._unsupported_reason_locked(selected_vac, observed_vac)
         complete = bool(connected and has_public_key)
         if identity_conflict:
             status = "conflict"
             guidance = identity_conflict
+        elif unsupported_reason == "region_v2":
+            status = "unsupported"
+            guidance = REGION_V2_UNSUPPORTED_GUIDANCE
+            complete = False
         elif complete:
             status = "complete"
             guidance = "Device paired and connected."
@@ -768,6 +792,8 @@ class RuntimeState:
             "public_key_state": public_key_state,
             "connected": connected,
             "identity_conflict": identity_conflict,
+            "unsupported": bool(unsupported_reason),
+            "unsupported_reason": unsupported_reason,
             "checks": checks,
             "steps": [
                 {
@@ -782,6 +808,16 @@ class RuntimeState:
             "selected": dict(target_payload),
             "target": dict(target_payload),
         }
+
+    @staticmethod
+    def _unsupported_reason_locked(*vacuums: dict[str, Any] | None) -> str:
+        for vac in vacuums:
+            if vac is None:
+                continue
+            reason = str(vac.get("unsupported_reason") or "").strip()
+            if reason:
+                return reason
+        return ""
 
     def _pairing_step_details_locked(self, target_did: str) -> dict[str, str]:
         sample_count = self._pairing_public_key_sample_count_locked(target_did)
@@ -1111,7 +1147,12 @@ class RuntimeState:
         if not key_state and duid and duid in key_details:
             key_state = dict(key_details[duid])
         public_key_ready = has_required_messages and has_public_key
-        if public_key_ready:
+        unsupported_reason = str(vac.get("unsupported_reason") or "").strip()
+        unsupported = bool(unsupported_reason)
+        if unsupported_reason == "region_v2":
+            onboarding_status = "unsupported"
+            guidance = REGION_V2_UNSUPPORTED_GUIDANCE
+        elif public_key_ready:
             onboarding_status = "ready"
             guidance = "Required onboarding messages captured and public key is available."
         elif has_required_messages and not has_public_key:
@@ -1192,6 +1233,7 @@ class RuntimeState:
             "last_http_path": str(vac.get("last_http_path") or ""),
             "last_http_remote": str(vac.get("last_http_remote") or ""),
             "last_http_host": str(vac.get("last_http_host") or ""),
+            "last_region_version": str(vac.get("last_region_version") or ""),
             "last_mqtt_at": str(vac.get("last_mqtt_at") or ""),
             "last_mqtt_topic": str(vac.get("last_mqtt_topic") or ""),
             "last_mqtt_direction": str(vac.get("last_mqtt_direction") or ""),
@@ -1209,6 +1251,8 @@ class RuntimeState:
                 "public_key_ready": public_key_ready,
                 "status": onboarding_status,
                 "guidance": guidance,
+                "unsupported": unsupported,
+                "unsupported_reason": unsupported_reason,
                 "key_state": key_state,
             },
         }
