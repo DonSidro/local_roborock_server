@@ -21,13 +21,13 @@ These vacuums likely all use a newer firmware version that uses a v2 of the regi
 
 - Roborock Saros 20 Sonic
 - Roborock Qrevo Curv 2 Pro
+- Saros 20
 
 ## Potentially Supported
-These are using the same firmware as the two above. Any vacuum released after Sep 2025 is likely not supported in its current form.
+These are (maybe) using the same firmware as the two above. Any vacuum released after Sep 2025 is likely not supported in its current form.  Please give it a try and let me know so I can update the docs.
 
 - Roborock Qrevo Edge 2
 - Roborock Qrevo S Pro
-- Saros 20
 - Qrevo Curv 2 Flow
 - Qrevo CurvX
 - Saros Z70
