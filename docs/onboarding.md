@@ -4,7 +4,7 @@ Before you start, finish [Installation](installation.md) and make sure the serve
 
 Make sure you have already completed the cloud import/fetch-data step from Installation before starting onboarding. If you skip that step, the onboarding tools will not know which vacuum to target and you can end up with `No known vacuums are available for onboarding.`
 
-If this is a brand new vacuum, it is still a good idea to set it up once in the official Roborock app first so the app can fetch the vacuum's current metadata and confirm the firmware is up to date.
+If this is a brand new vacuum, it is still a good idea to set it up once in the official Roborock app first so the app can fetch the vacuum's current metadata. I would skip doing any firmware updates unless you know the latest firmware version is supported.
 
 ## Guided Flow
 
