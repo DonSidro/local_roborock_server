@@ -8,7 +8,7 @@ body:
         Thanks for taking the time to file a bug/issue! If instead you just want to
         confirm the server/onboarding works (or does not work) on your device, please use
         the [Compatibility Discussions
-        category](https://github.com/DonSidro/local_roborock_server/discussions/categories/compatibility)
+        category](https://github.com/Python-roborock/local_roborock_server/discussions/categories/compatibility)
         rather than opening an issue.
 
   - type: checkboxes

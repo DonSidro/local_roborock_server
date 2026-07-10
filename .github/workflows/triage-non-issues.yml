@@ -45,14 +45,14 @@ jobs:
             }
 
             const discussions =
-              "https://github.com/DonSidro/local_roborock_server/discussions/categories/compatibility";
+              "https://github.com/Python-roborock/local_roborock_server/discussions/categories/compatibility";
             const comment = [
               "Thanks for the report!",
               "",
               "This looks like it might be a **device-compatibility confirmation** rather than a bug.",
               "If so, please share it in the [Compatibility Discussions category](" + discussions + ") —",
               "that keeps Issues focused on defects and makes your result easier for others to find.",
-              "Confirmed results can also be added to [COMPATIBILITY.md](../blob/main/COMPATIBILITY.md) via a quick PR.",
+              "Confirmed results can also be added to [tested_vacuums.md](../blob/main/docs/tested_vacuums.md) via a quick PR.",
               "",
               "If this really is a bug, no worries — a maintainer will take a look. This issue stays open either way.",
             ].join("\n");
