@@ -1,0 +1,65 @@
+name: Triage non-issues
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  issues: write
+
+jobs:
+  triage:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Label and nudge likely compatibility reports
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = context.payload.issue;
+            const body = (issue.body || "").trim();
+            const title = (issue.title || "").trim();
+
+            // Always mark new issues for a human to look at.
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.number,
+              labels: ["needs-triage"],
+            });
+
+            // Heuristics for "it works on my device" style reports.
+            const phrases = [
+              "works on my",
+              "works fine",
+              "just confirming",
+              "confirming it works",
+              "can confirm",
+              "working on my",
+            ];
+            const haystack = (title + "\n" + body).toLowerCase();
+            const matchesPhrase = phrases.some((p) => haystack.includes(p));
+            const isShort = body.length < 200;
+
+            if (!matchesPhrase && !isShort) {
+              return;
+            }
+
+            const discussions =
+              "https://github.com/DonSidro/local_roborock_server/discussions/categories/compatibility";
+            const comment = [
+              "Thanks for the report!",
+              "",
+              "This looks like it might be a **device-compatibility confirmation** rather than a bug.",
+              "If so, please share it in the [Compatibility Discussions category](" + discussions + ") —",
+              "that keeps Issues focused on defects and makes your result easier for others to find.",
+              "Confirmed results can also be added to [COMPATIBILITY.md](../blob/main/COMPATIBILITY.md) via a quick PR.",
+              "",
+              "If this really is a bug, no worries — a maintainer will take a look. This issue stays open either way.",
+            ].join("\n");
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.number,
+              body: comment,
+            });
