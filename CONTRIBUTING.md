@@ -11,7 +11,7 @@ If you would like to contribute there are a few ways that would be great!
 To keep Issues focused and actionable, there are three destinations depending on what you have:
 
 - **Found a bug?** → Open an [Issue](https://github.com/DonSidro/local_roborock_server/issues/new/choose).
-  Use the bug report form and confirm it is a real defect, not a "works on my device" note.
+  Use the bug report form and confirm it is a real issue, not a "works on my device" note.
 - **Confirming (or ruling out) that the server runs on your vacuum?** → Post in the
   [Compatibility Discussions category](https://github.com/DonSidro/local_roborock_server/discussions/categories/compatibility).
   Please include your model, firmware, and which certificate chain you used. These reports do **not**
