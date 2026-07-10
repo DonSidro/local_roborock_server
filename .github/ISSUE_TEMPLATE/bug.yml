@@ -14,17 +14,17 @@ body:
   - type: checkboxes
     id: confirm-defect
     attributes:
-      label: This is a defect
+      label: This is a real issue?
       options:
-        - label: I have confirmed this is a defect, not a report that the project works on my device.
+        - label: I have confirmed this is a issue, not a report that the project works on my device.
           required: true
 
   - type: textarea
     id: what-happened
     attributes:
       label: What happened?
-      description: Describe the problem, including what you expected to happen instead.
-      placeholder: Onboarding fails after DNS and server checks pass...
+      description: Describe the issue/problem, including what you expected to happen instead.
+      placeholder: Onboarding fails after devices says connection to wifi...
     validations:
       required: true
 
@@ -44,7 +44,7 @@ body:
     id: vacuum
     attributes:
       label: Vacuum model
-      description: Which Roborock model are you running against?
+      description: Which Roborock model are you trying on?
       placeholder: Roborock S8 MaxV Ultra
     validations:
       required: false
