@@ -1,18 +1,18 @@
-name: Bug report
-description: Report a defect in the Roborock Local Server stack
-labels: ["bug"]
+name: Bug/Issue report
+description: Report a issue related to the Roborock Local Server stack
+labels: ["bug/issue"]
 body:
   - type: markdown
     attributes:
       value: >-
-        Thanks for taking the time to file a bug! If instead you just want to
-        confirm the server works (or does not work) on your device, please use
+        Thanks for taking the time to file a bug/issue! If instead you just want to
+        confirm the server/onboarding works (or does not work) on your device, please use
         the [Compatibility Discussions
         category](https://github.com/DonSidro/local_roborock_server/discussions/categories/compatibility)
         rather than opening an issue.
 
   - type: checkboxes
-    id: confirm-defect
+    id: confirm-issue
     attributes:
       label: This is a real issue?
       options:
