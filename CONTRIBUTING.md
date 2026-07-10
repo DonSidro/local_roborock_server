@@ -17,6 +17,6 @@ To keep Issues focused and actionable, there are three destinations depending on
   Please include your model, firmware, and which certificate chain you used. These reports do **not**
   belong in Issues.
 - **Have a confirmed, reproducible result to record?** → Open a pull request adding a row to
-  [COMPATIBILITY.md](COMPATIBILITY.md) so the next person can find it quickly.
+  [Tested Vacuums.md](tested_vacuums.md) so the next person can find it quickly.
 
 Feature ideas are welcome as Issues too — use the feature request form.
